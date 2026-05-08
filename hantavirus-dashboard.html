@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hantavirus Outbreak Timeline Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0e0f;
+    --bg2: #141517;
+    --bg3: #1a1c1e;
+    --bg4: #222428;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8e6e1;
+    --text2: #9b9890;
+    --text3: #5e5c57;
+    --red: #e85d3a;
+    --red-dim: rgba(232,93,58,0.12);
+    --amber: #d4933a;
+    --amber-dim: rgba(212,147,58,0.12);
+    --green: #4aab7a;
+    --green-dim: rgba(74,171,122,0.1);
+    --blue: #4a8fd4;
+    --blue-dim: rgba(74,143,212,0.1);
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 clamp(1rem, 4vw, 3rem);
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,14,15,0.92);
+    backdrop-filter: blur(12px);
+  }
+  .header-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px; gap: 1rem;
+  }
+  .logo {
+    font-family: var(--mono); font-size: 13px; font-weight: 500;
+    color: var(--text2); letter-spacing: .06em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  .live-pill {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    background: var(--red-dim); color: var(--red);
+    border: 1px solid rgba(232,93,58,0.25);
+    padding: 3px 10px; border-radius: 99px; letter-spacing: .04em;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .live-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: pulse 1.2s ease-in-out infinite; }
+  .header-meta { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: clamp(2.5rem, 6vw, 5rem) clamp(1rem, 4vw, 3rem) clamp(2rem, 4vw, 3rem);
+    max-width: 1100px; margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-eyebrow {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--red); letter-spacing: .1em; text-transform: uppercase;
+    margin-bottom: .75rem;
+  }
+  .hero-title {
+    font-size: clamp(28px, 4vw, 48px); font-weight: 300; line-height: 1.15;
+    color: var(--text); margin-bottom: 1rem; letter-spacing: -.01em;
+  }
+  .hero-title strong { font-weight: 500; }
+  .hero-sub {
+    font-size: 15px; color: var(--text2); max-width: 600px; line-height: 1.7;
+  }
+
+  /* ── METRICS ── */
+  .metrics-strip {
+    max-width: 1100px; margin: 0 auto;
+    padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3rem);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px; background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .metric {
+    background: var(--bg); padding: 1.5rem 1.25rem;
+  }
+  .metric-label { font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: .05em; text-transform: uppercase; margin-bottom: .5rem; }
+  .metric-val { font-size: 32px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: .25rem; }
+  .metric-val.warn { color: var(--red); }
+  .metric-sub { font-size: 12px; color: var(--text3); }
+
+  /* ── LAYOUT ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: clamp(1.5rem, 3vw, 3rem) clamp(1rem, 4vw, 3rem); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  @media(max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    color: var(--text3); letter-spacing: .1em; text-transform: uppercase;
+    margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── FILTER TABS ── */
+  .filter-row { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .filter-btn {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .04em;
+    padding: 5px 14px; border-radius: 4px;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text2); cursor: pointer; transition: all .15s;
+  }
+  .filter-btn:hover { border-color: var(--text3); color: var(--text); }
+  .filter-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* ── TIMELINE ── */
+  .timeline { position: relative; padding-left: 22px; }
+  .timeline::before { content: ''; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 1px; background: var(--border2); }
+  .tl-event { position: relative; margin-bottom: 0; }
+  .tl-dot {
+    position: absolute; left: -21px; top: 16px;
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid var(--bg); background: var(--text3);
+  }
+  .tl-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 8px;
+    transition: border-color .15s, background .15s; cursor: default;
+  }
+  .tl-card:hover { border-color: var(--border2); background: var(--bg3); }
+  .tl-card.active-event { border-color: rgba(232,93,58,0.35); }
+  .tl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+  .tl-year { font-family: var(--mono); font-size: 11px; color: var(--text3); flex-shrink: 0; letter-spacing: .04em; }
+  .tl-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.35; }
+  .tl-body { font-size: 13px; color: var(--text2); line-height: 1.65; }
+  .tl-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .03em;
+    padding: 2px 8px; border-radius: 3px; font-weight: 500;
+  }
+  .tag-red { background: var(--red-dim); color: var(--red); }
+  .tag-amber { background: var(--amber-dim); color: var(--amber); }
+  .tag-green { background: var(--green-dim); color: var(--green); }
+  .tag-blue { background: var(--blue-dim); color: var(--blue); }
+
+  /* ── RIGHT COLUMN ── */
+  .right-col { display: flex; flex-direction: column; gap: 2rem; }
+
+  /* ── VARIANT CARDS ── */
+  .variant-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .variant-card.highlight { border-color: rgba(232,93,58,0.3); }
+  .variant-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .variant-meta { font-size: 12px; color: var(--text2); }
+  .variant-badge {
+    font-family: var(--mono); font-size: 10px;
+    background: var(--red-dim); color: var(--red);
+    border: 1px solid rgba(232,93,58,0.2);
+    padding: 2px 8px; border-radius: 3px;
+    display: inline-block; margin-top: 6px;
+  }
+
+  /* ── BAR CHART ── */
+  .bar-chart { display: flex; flex-direction: column; gap: 7px; }
+  .bar-row { display: grid; grid-template-columns: 80px 1fr 70px; align-items: center; gap: 10px; }
+  .bar-lbl { font-family: var(--mono); font-size: 11px; color: var(--text2); text-align: right; }
+  .bar-track { height: 10px; background: var(--bg4); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; background: var(--blue); transition: width .6s ease; }
+  .bar-fill.accent { background: var(--amber); }
+  .bar-fill.danger { background: var(--red); }
+  .bar-val { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+  /* ── NEWS ── */
+  .news-list { display: flex; flex-direction: column; gap: 6px; }
+  .news-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 14px;
+    text-decoration: none; display: block; transition: border-color .15s, background .15s;
+  }
+  .news-item:hover { border-color: var(--border2); background: var(--bg3); }
+  .news-src { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: .04em; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+  .news-src .official { color: var(--blue); }
+  .news-title-link { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .news-date { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+  /* ── STATUS BOX ── */
+  .status-box {
+    background: var(--red-dim); border: 1px solid rgba(232,93,58,0.25);
+    border-radius: 8px; padding: 16px;
+    margin-bottom: 2rem;
+  }
+  .status-head { font-family: var(--mono); font-size: 11px; color: var(--red); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+  .status-head::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulse 1.2s ease-in-out infinite; }
+  .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
+  .status-item { }
+  .status-item-label { font-family: var(--mono); font-size: 10px; color: rgba(232,93,58,0.6); letter-spacing: .04em; margin-bottom: 2px; }
+  .status-item-val { font-size: 16px; font-weight: 500; color: var(--red); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3rem);
+    max-width: 1100px; margin: 0 auto;
+  }
+  .footer-sources { font-size: 12px; color: var(--text3); line-height: 1.8; }
+  .footer-sources a { color: var(--text2); text-decoration: none; border-bottom: 1px solid var(--border2); }
+  .footer-sources a:hover { color: var(--text); }
+  .footer-note { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: .75rem; letter-spacing: .02em; }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff; color: #111; }
+    .site-header { position: static; background: #fff; }
+    .status-box { border: 1px solid #e85d3a; background: #fff3ef; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  .tl-event { animation: fadeUp .35s ease both; }
+  .tl-event:nth-child(1) { animation-delay: .05s; }
+  .tl-event:nth-child(2) { animation-delay: .10s; }
+  .tl-event:nth-child(3) { animation-delay: .15s; }
+  .tl-event:nth-child(4) { animation-delay: .20s; }
+  .tl-event:nth-child(5) { animation-delay: .25s; }
+  .tl-event:nth-child(6) { animation-delay: .30s; }
+  .tl-event:nth-child(7) { animation-delay: .35s; }
+  .tl-event:nth-child(8) { animation-delay: .40s; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      Hantavirus / Outbreak Tracker
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="live-pill">Live 2026</span>
+      <span class="header-meta">Updated May 8, 2026</span>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-eyebrow">Disease surveillance · 1993 – 2026</div>
+  <h1 class="hero-title"><strong>Hantavirus</strong><br>Outbreak Timeline</h1>
+  <p class="hero-sub">A complete record of major hantavirus events — from the 1993 Four Corners discovery to the active MV Hondius cluster. Sources: CDC, WHO, peer-reviewed literature.</p>
+</section>
+
+<div class="metrics-strip">
+  <div class="metric">
+    <div class="metric-label">US cases since 1993</div>
+    <div class="metric-val">890</div>
+    <div class="metric-sub">CDC surveillance 1993–2023</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">US case fatality rate</div>
+    <div class="metric-val warn">~35%</div>
+    <div class="metric-sub">All confirmed US HPS cases</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Global est. per year</div>
+    <div class="metric-val">10k–100k</div>
+    <div class="metric-sub">Mostly Asia &amp; Europe (HFRS)</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">2026 confirmed cases</div>
+    <div class="metric-val warn">6+</div>
+    <div class="metric-sub">MV Hondius as of May 8, 2026</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">2026 deaths</div>
+    <div class="metric-val warn">3</div>
+    <div class="metric-sub">1 confirmed hantavirus</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">WHO global risk</div>
+    <div class="metric-val">Low</div>
+    <div class="metric-sub">Assessed May 7, 2026</div>
+  </div>
+</div>
+
+<main class="main">
+
+  <!-- LIVE STATUS -->
+  <div class="status-box">
+    <div class="status-head">Active event — MV Hondius cruise ship, Atlantic Ocean</div>
+    <p style="font-size:13px;color:rgba(232,93,58,0.85);line-height:1.65">Dutch polar expedition vessel departed Ushuaia, Argentina on April 1, 2026. Three passengers have died. The Andes virus (the only hantavirus capable of limited person-to-person spread) has been confirmed. The ship is en route to Tenerife; CDC personnel will escort US passengers to the National Quarantine Unit in Nebraska. WHO assesses global public health risk as <strong>low</strong>.</p>
+    <div class="status-grid">
+      <div class="status-item"><div class="status-item-label">Confirmed cases</div><div class="status-item-val">6+</div></div>
+      <div class="status-item"><div class="status-item-label">Suspected cases</div><div class="status-item-val">9</div></div>
+      <div class="status-item"><div class="status-item-label">Deaths</div><div class="status-item-val">3</div></div>
+      <div class="status-item"><div class="status-item-label">Countries affected</div><div class="status-item-val">5+</div></div>
+      <div class="status-item"><div class="status-item-label">Virus strain</div><div class="status-item-val">ANDV</div></div>
+      <div class="status-item"><div class="status-item-label">CDC level</div><div class="status-item-val">3</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- LEFT: TIMELINE -->
+    <div>
+      <div class="section-label">Outbreak timeline</div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="filterEvents('all',this)">All</button>
+        <button class="filter-btn" onclick="filterEvents('major',this)">Major outbreaks</button>
+        <button class="filter-btn" onclick="filterEvents('p2p',this)">Person-to-person</button>
+        <button class="filter-btn" onclick="filterEvents('discovery',this)">Discoveries</button>
+      </div>
+      <div class="timeline" id="timeline">
+
+        <div class="tl-event" data-tags="discovery major">
+          <div class="tl-dot" style="background:#4aab7a"></div>
+          <div class="tl-card">
+            <div class="tl-head"><span class="tl-title">1993 — Four Corners outbreak &amp; HPS discovery</span><span class="tl-year">USA</span></div>
+            <div class="tl-body">Navajo adults in New Mexico died of acute respiratory failure. CDC identified Sin Nombre virus (SNV) carried by deer mice. 48 cases nationwide; 56% fatality rate. HPS named for the first time. El Niño–driven rodent population boom linked as root cause.</div>
+            <div class="tl-tags">
+              <span class="tag tag-red">27 deaths</span>
+              <span class="tag tag-amber">48 cases</span>
+              <span class="tag tag-green">New virus identified</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-event" data-tags="discovery">
+          <div class="tl-dot" style="background:#4a8fd4"></div>
+          <div class="tl-card">
+            <div class="tl-head"><span class="tl-title">1995 — HPS becomes nationally notifiable</span><span class="tl-year">USA</span></div>
+            <div class="tl-body">CDC required all states to report HPS through the Nationally Notifiable Disease Surveillance System, formalizing the tracking infrastructure still in use today.</div>
+            <div class="tl-tags"><span class="tag tag-green">Policy milestone</span></div>
+          </div>
+        </div>
+
+        <div class="tl-event" data-tags="major p2p">
+          <div class="tl-dot" style="background:#d4933a"></div>
+          <div class="tl-card">
+            <div class="tl-head"><span class="tl-title">1997 — Chile outbreak, Andes virus documented</span><span class="tl-year">Chile</span></div>
+            <div class="tl-body">HPS outbreak in southern Chile confirmed Andes virus (ANDV). Early evidence emerged that ANDV — unlike SNV — could spread between people, a rare and alarming property confirmed in later studies.</div>
+            <div class="tl-tags">
+              <span class="tag tag-blue">Person-to-person suspected</span>
+              <span class="tag tag-green">Andes virus identified</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-event" data-tags="major">
+          <div class="tl-dot" style="background:#4a8fd4"></div>
+          <div class="tl-card">
+            <div class="tl-head"><span class="tl-title">2000s — Endemic transmission, South America</span><span class="tl-year">Argentina / Chile</span></div>
+            <div class="tl-body">Argentina reported ~100 confirmed cases annually 2013–2018 across four endemic regions. Argentina and Chile emerged as the global hotspot for Andes virus HPS, with an 18.6% case fatality rate.</div>
+            <div class="tl-tags">
+              <span class="tag tag-amber">~100 cases/yr in Argentina</span>
+              <span class="tag tag-red">18.6% fatality rate</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-event" data-tags="major">
+          <div class="tl-dot" style="background:#d4933a"></div>
+          <div class="tl-card">
+            <div class="tl-head"><span class="tl-title">2012 — Yosemite National Park cluster</span><span class="tl-year">California, USA</span></div>
+            <div class="tl-body">10 visitors to Curry Village tent cabins contracted Sin Nombre virus; 3 died. Deer mice were nesting inside double-wall foam insulation of the cabins. ~22,000 potential contacts worldwide were notified. The cabins were demolished.</div>
+            <div class="tl-tags">
+              <span class="tag tag-red">3 deaths</span>
+              <span class="tag tag-amber">10 cases</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-event" data-tags="major p2p">
+          <div class="tl-dot" style="background:#e85d3a"></div>
+          <div class="tl-card">
+            <div class="tl-head"><span class="tl-title">2018–2019 — Epuyén cluster, largest known P2P event</span><span class="tl-year">Patagonia, Argentina</span></div>
+            <div class="tl-body">A single introduction of Andes virus into a village of 2,000 people in Chubut Province caused 34 confirmed infections and 11 deaths. Three "super-spreader" patients who attended crowded social events drove the chain. The best-documented case of sustained human-to-human ANDV transmission — the reference event for the 2026 cruise investigation.</div>
+            <div class="tl-tags">
+              <span class="tag tag-red">11 deaths</span>
+              <span class="tag tag-amber">34 cases</span>
+              <span class="tag tag-blue">Confirmed P2P spread</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-event" data-tags="discovery">
+          <div class="tl-dot" style="background:#4aab7a"></div>
+          <div class="tl-card">
+            <div class="tl-head"><span class="tl-title">2020s — Vaccine phase I trials; still no licensed treatment</span><span class="tl-year">Global</span></div>
+            <div class="tl-body">US Army Medical Research completed Phase I clinical trials of an Andes virus vaccine. No FDA-licensed vaccine or antiviral treatment exists. WHO, CDC, and ECDC confirm that supportive hospital care remains the only standard of care for HPS.</div>
+            <div class="tl-tags"><span class="tag tag-green">Vaccine in trials</span></div>
+          </div>
+        </div>
+
+        <div class="tl-event active-event" data-tags="major p2p">
+          <div class="tl-dot" style="background:#e85d3a;box-shadow:0 0 0 4px rgba(232,93,58,0.2)"></div>
+          <div class="tl-card active-event">
+            <div class="tl-head">
+              <span class="tl-title">Apr–May 2026 — MV Hondius cruise ship cluster <span class="tag tag-red" style="font-size:10px;vertical-align:middle;margin-left:4px">Active</span></span>
+              <span class="tl-year">Atlantic</span>
+            </div>
+            <div class="tl-body">Dutch polar expedition vessel departed Ushuaia, Argentina, April 1. A Dutch passenger fell ill April 6 and died April 11 from respiratory distress. His wife died April 26 in Johannesburg; a 3rd death followed. As of May 8: 6+ confirmed, 9 suspected; patients hospitalized in South Africa, Netherlands, Germany, Saint Helena, and Switzerland. CDC dispatching to Tenerife. 17 Americans to be repatriated to Nebraska quarantine unit. WHO global risk: <strong>low</strong>.</div>
+            <div class="tl-tags">
+              <span class="tag tag-red">3 deaths</span>
+              <span class="tag tag-amber">6+ confirmed cases</span>
+              <span class="tag tag-blue">Andes virus (P2P capable)</span>
+              <span class="tag tag-red">CDC Level 3</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+
+      <!-- US CASES BAR CHART -->
+      <div>
+        <div class="section-label">US cumulative cases by decade</div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <span class="bar-lbl">1993–99</span>
+            <div class="bar-track"><div class="bar-fill" style="width:28%"></div></div>
+            <span class="bar-val">~250 cases</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-lbl">2000–09</span>
+            <div class="bar-track"><div class="bar-fill" style="width:30%"></div></div>
+            <span class="bar-val">~265 cases</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-lbl">2010–19</span>
+            <div class="bar-track"><div class="bar-fill" style="width:25%"></div></div>
+            <span class="bar-val">~245 cases</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-lbl">2020–23</span>
+            <div class="bar-track"><div class="bar-fill accent" style="width:14%"></div></div>
+            <span class="bar-val">~130 cases</span>
+          </div>
+          <div class="bar-row" style="margin-top:4px">
+            <span class="bar-lbl" style="font-size:10px;color:var(--text3)">Global/yr</span>
+            <div class="bar-track"><div class="bar-fill danger" style="width:100%"></div></div>
+            <span class="bar-val" style="font-size:10px">10k–100k</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIRUS VARIANTS -->
+      <div>
+        <div class="section-label">Virus variants &amp; regions</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="variant-card">
+            <div class="variant-name">Sin Nombre virus (SNV)</div>
+            <div class="variant-meta">North America · carrier: deer mouse · causes HPS · no person-to-person spread</div>
+          </div>
+          <div class="variant-card highlight">
+            <div class="variant-name">Andes virus (ANDV)</div>
+            <div class="variant-meta">South America · causes HPS · only hantavirus with confirmed person-to-person spread</div>
+            <div class="variant-badge">Active — MV Hondius 2026</div>
+          </div>
+          <div class="variant-card">
+            <div class="variant-name">Hantaan / Seoul / Puumala</div>
+            <div class="variant-meta">Asia &amp; Europe · causes HFRS (kidney disease) · no P2P spread · thousands of cases yearly; declining trend in East Asia</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VERIFIED NEWS -->
+      <div>
+        <div class="section-label">Verified sources</div>
+        <div class="news-list">
+          <a class="news-item" href="https://www.who.int/news/item/07-05-2026-who-s-response-to-hantavirus-cases-linked-to-a-cruise-ship" target="_blank" rel="noopener">
+            <div class="news-src"><span class="official">WHO</span> · official statement</div>
+            <div class="news-title-link">WHO response to hantavirus cases linked to MV Hondius</div>
+            <div class="news-date">May 7, 2026</div>
+          </a>
+          <a class="news-item" href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599" target="_blank" rel="noopener">
+            <div class="news-src"><span class="official">WHO DON 599</span> · official</div>
+            <div class="news-title-link">Disease Outbreak News — hantavirus cluster linked to cruise ship</div>
+            <div class="news-date">May 5, 2026</div>
+          </a>
+          <a class="news-item" href="https://www.cdc.gov/media/releases/2026-hantavirus-confirmed-cruise-ship.html" target="_blank" rel="noopener">
+            <div class="news-src"><span class="official">CDC</span> · official statement</div>
+            <div class="news-title-link">CDC statement on MV Hondius — US passengers &amp; repatriation plan</div>
+            <div class="news-date">May 7, 2026</div>
+          </a>
+          <a class="news-item" href="https://www.cdc.gov/hantavirus/data-research/cases/index.html" target="_blank" rel="noopener">
+            <div class="news-src"><span class="official">CDC</span> · surveillance data</div>
+            <div class="news-title-link">Reported cases of hantavirus disease in the US, 1993–2023</div>
+            <div class="news-date">Updated Apr 2026</div>
+          </a>
+          <a class="news-item" href="https://www.livescience.com/health/live/hantivirus-cruise-friday-may-8" target="_blank" rel="noopener">
+            <div class="news-src">Live Science · May 8, 2026</div>
+            <div class="news-title-link">Hantavirus live updates: CDC to escort Americans to quarantine unit in Nebraska</div>
+            <div class="news-date">May 8, 2026</div>
+          </a>
+          <a class="news-item" href="https://www.cbc.ca/news/world/hantavirus-outbreak-timeline-cruise-ship-9.7190889" target="_blank" rel="noopener">
+            <div class="news-src">CBC News / Associated Press</div>
+            <div class="news-title-link">Timeline: how the hantavirus outbreak unfolded on the MV Hondius</div>
+            <div class="news-date">May 7, 2026</div>
+          </a>
+          <a class="news-item" href="https://abcnews.com/International/live-updates/hantavirus-live-updates-mv-hondius-canary-islands/?id=132746955" target="_blank" rel="noopener">
+            <div class="news-src">ABC News</div>
+            <div class="news-title-link">Hantavirus live updates — CDC, repatriation, ship en route to Canary Islands</div>
+            <div class="news-date">May 8, 2026</div>
+          </a>
+          <a class="news-item" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6199996/" target="_blank" rel="noopener">
+            <div class="news-src">NEJM / PubMed Central · peer-reviewed</div>
+            <div class="news-title-link">HPS — 25th anniversary of the Four Corners outbreak (2018 review)</div>
+            <div class="news-date">PMC6199996</div>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-sources">
+    <strong style="color:var(--text2)">Sources:</strong>
+    <a href="https://www.cdc.gov/hantavirus/data-research/cases/index.html" target="_blank" rel="noopener">CDC Hantavirus Surveillance 1993–2023</a> ·
+    <a href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599" target="_blank" rel="noopener">WHO DON599</a> ·
+    <a href="https://www.who.int/news/item/07-05-2026-who-s-response-to-hantavirus-cases-linked-to-a-cruise-ship" target="_blank" rel="noopener">WHO Press Briefing May 7 2026</a> ·
+    <a href="https://en.wikipedia.org/wiki/MV_Hondius_hantavirus_outbreak" target="_blank" rel="noopener">Wikipedia — MV Hondius outbreak</a> ·
+    <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6199996/" target="_blank" rel="noopener">NEJM PMC6199996</a> ·
+    <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2009040" target="_blank" rel="noopener">NEJM 2020 — Epuyén super-spreaders</a>
+  </div>
+  <div class="footer-note">Dashboard reflects data as of May 8, 2026 · WHO global risk: low · No licensed antiviral treatment or vaccine exists as of this date.</div>
+</footer>
+
+<script>
+function filterEvents(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tl-event').forEach(ev => {
+    if (type === 'all') { ev.style.display = ''; return; }
+    ev.style.display = (ev.dataset.tags || '').split(' ').includes(type) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
